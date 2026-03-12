@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="火鍋計時器">
+<meta name="theme-color" content="#2A7B88">
+<link rel="apple-touch-icon" href="https://pfst.cf2.poecdn.net/base/image/22dbf55d898bf8bbb935ffa90e484c6caf75ec971a43304e65adeee8eedc126a?w=180&h=180">
+<title>火鍋計時器</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍲</text></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --pri:#2A7B88;
+  --sec:#E07B5E;--sec-l:#F09B7E;
+  --amb:#EAC76D;
+  --bg:#FDF6EB;--txt:#2C3338;--txt-l:#8A8279;
+  --sh:0 2px 8px rgba(44,51,56,.08);
+  --r:14px;--r-s:10px;
+}
+html,body{margin:0!important;padding:0!important}
+html{height:100%;background:#FFF}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue","PingFang TC","Microsoft JhengHei",sans-serif;
+  background:var(--bg);color:var(--txt);
+  min-height:100%;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:'';position:fixed;top:0;left:0;right:0;
+  height:calc(48px + env(safe-area-inset-top,0px));
+  background:#2A7B88;z-index:99;pointer-events:none;
+}
+
+/* ===== HEADER ===== */
+.header{
+  display:flex;align-items:center;
+  width:100%;left:0;right:0;
+  background:rgba(42,123,136,.95);color:#fff;
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 12px rgba(42,123,136,.25);
+  padding:env(safe-area-inset-top,0) 12px 0;
+  min-height:48px;
+}
+.hdr-default,.hdr-search{display:flex;align-items:center;width:100%}
+.hdr-search{display:none}
+.hdr-default h1{flex:1;font-size:20px;font-weight:800;letter-spacing:2px;text-align:center}
+.search-open-btn{
+  width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  background:none;border:none;font-size:20px;cursor:pointer;
+  border-radius:50%;color:#fff;
+}
+.search-open-btn:active{background:rgba(255,255,255,.15)}
+.hdr-search input{
+  flex:1;padding:8px 14px;border-radius:20px;border:none;
+  font-size:15px;background:rgba(255,255,255,.92);color:var(--txt);outline:none;
+}
+.hdr-search input::placeholder{color:#999}
+.search-cancel{
+  background:none;border:none;color:#fff;font-size:14px;
+  font-weight:600;cursor:pointer;padding:6px 8px;white-space:nowrap;
+}
+
+/* ===== SUB-CATEGORY TABS ===== */
+.sub-tabs{
+  position:sticky;top:calc(48px + env(safe-area-inset-top,0px));z-index:98;
+  background:rgba(253,246,235,.75);
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+  display:flex;overflow-x:auto;gap:8px;
+  padding:8px 14px;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;
+}
+.sub-tabs::-webkit-scrollbar{display:none}
+.sub-tabs.hide{display:none}
+.sub-tab{
+  flex-shrink:0;padding:6px 14px;border-radius:18px;
+  border:2px solid var(--gc,var(--pri));
+  background:transparent;color:var(--gc,var(--pri));
+  font-size:13px;font-weight:700;cursor:pointer;
+  transition:all .2s;white-space:nowrap;
+}
+.sub-tab.active{background:var(--gc,var(--pri));color:#fff}
+
+/* ===== INGREDIENT GRID ===== */
+.sections{padding:0 12px 200px}
+.grp-header{
+  display:flex;align-items:center;gap:8px;
+  padding:16px 4px 4px;font-size:13px;font-weight:800;
+  color:var(--gc);letter-spacing:2px;
+}
+.grp-dot{width:10px;height:10px;border-radius:50%;background:var(--gc);flex-shrink:0}
+.grp-line{flex:1;height:1px;background:var(--gc);opacity:.25}
+.sec-title{
+  font-size:20px;font-weight:800;color:var(--gc,var(--pri));
+  padding:12px 4px 8px;border-bottom:2px solid var(--gc,var(--pri));
+  margin-bottom:10px;display:flex;align-items:center;gap:8px;
+}
+.sec-title span{font-size:22px}
+.grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:10px;margin-bottom:16px;
+}
+@media(min-width:420px){.grid{grid-template-columns:repeat(4,1fr)}}
+
+.i-card{
+  background:rgba(255,255,255,.65);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border-radius:var(--r-s);
+  padding:14px 6px 10px;text-align:center;
+  box-shadow:var(--sh),inset 0 1px 0 rgba(255,255,255,.6);
+  cursor:pointer;
+  transition:transform .12s,border-color .2s,background .2s;
+  border:1.5px solid rgba(255,255,255,.5);user-select:none;
+}
+.i-card:active{transform:scale(.94)}
+.i-card.has-timer{border-color:var(--sec-l);background:#FFF7F4}
+.i-card .i-name{font-size:15px;font-weight:700;line-height:1.3}
+.i-card .i-alias{font-size:11px;color:var(--txt-l);margin-top:1px}
+.i-card .i-time{font-size:13px;color:var(--sec);font-weight:700;margin-top:4px}
+.i-card .i-go{
+  display:inline-block;margin-top:6px;padding:3px 14px;
+  background:var(--gc,var(--pri));color:#fff;border-radius:12px;
+  font-size:12px;font-weight:700;
+}
+.i-card.has-timer .i-go{background:var(--sec)}
+
+.no-res{text-align:center;padding:60px 20px;color:var(--txt-l);font-size:16px;display:none}
+.no-res.show{display:block}
+.no-res .nr-e{font-size:48px;display:block;margin-bottom:12px}
+
+/* ===== FIXED BOTTOM AREA ===== */
+.bottom-area{
+  position:fixed;bottom:0;left:0;right:0;
+  z-index:200;
+  border-radius:16px 16px 0 0;
+  background:#FFFFFF;
+  box-shadow:0 -6px 30px rgba(0,0,0,.15);
+  padding-bottom:env(safe-area-inset-bottom,0);
+  overflow:hidden;
+}
+
+/* Timer panel */
+.tp{
+  max-height:0;overflow:hidden;
+  transition:max-height .3s ease;
+  background:linear-gradient(180deg,#F9E0D5 0%,#FFF3ED 100%);
+  border-top:0 solid var(--sec);
+}
+.tp.show{max-height:260px;border-top-width:3px}
+.tp-handle{width:40px;height:4px;background:#E0A090;border-radius:2px;margin:10px auto 6px}
+.tp-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px 6px;
+}
+.tp-head-left{font-size:14px;font-weight:700;color:var(--sec);display:flex;align-items:center;gap:6px}
+.tp-count{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:20px;height:20px;background:var(--sec);color:#fff;
+  border-radius:10px;font-size:11px;font-weight:800;padding:0 5px;
+}
+.tp-clear{background:none;border:none;color:var(--txt-l);font-size:12px;cursor:pointer;padding:4px 6px}
+.tp-scroll{
+  display:flex;gap:10px;overflow-x:auto;padding:0 14px 10px;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;
+}
+.tp-scroll::-webkit-scrollbar{display:none}
+
+.tc{
+  flex-shrink:0;width:100px;
+  background:#fff;border-radius:var(--r);
+  padding:8px 4px 8px;text-align:center;
+  border:2px solid rgba(224,123,94,.2);
+  box-shadow:0 2px 8px rgba(224,123,94,.1);
+  transition:border-color .3s,background .3s;
+}
+.tc.done{border-color:var(--amb);animation:alertPulse .7s ease-in-out infinite alternate}
+.tc.paused{border-color:var(--txt-l);opacity:.85}
+@keyframes alertPulse{from{background:#FFF8E8}to{background:#FFECB3}}
+.tc svg{display:block;margin:0 auto}
+.tc .bg-ring{fill:none;stroke:#E8E2D8;stroke-width:4}
+.tc .fg-ring{
+  fill:none;stroke:var(--sec);stroke-width:4;stroke-linecap:round;
+  transform:rotate(-90deg);transform-origin:center;
+  transition:stroke-dashoffset .3s linear;
+}
+.tc.done .fg-ring{stroke:var(--amb)}
+.tc.paused .fg-ring{stroke:var(--txt-l)}
+.tc .t-num{fill:var(--txt);font-size:15px;font-weight:800;text-anchor:middle;dominant-baseline:central}
+.tc.done .t-num{fill:var(--sec);font-size:18px}
+.tc .t-name{font-size:11px;font-weight:700;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt)}
+.tc .t-btns{display:flex;justify-content:center;gap:5px;margin-top:5px}
+.t-btn{
+  width:28px;height:28px;border-radius:50%;border:none;
+  font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.t-btn-pp{background:var(--pri);color:#fff}
+.t-btn-pp.is-p{background:var(--amb);color:#fff}
+.t-btn-rst{background:#EDE8E2;color:var(--txt-l)}
+.t-btn-rm{background:#EDE8E2;color:#C0B8AE;font-size:14px}
+.t-btn-ok{
+  background:var(--amb);color:#fff;border:none;border-radius:14px;
+  padding:4px 16px;font-size:12px;font-weight:700;cursor:pointer;
+}
+
+/* Bottom navigation */
+.bnav{
+  display:flex;height:85px;
+  border-top:1px solid rgba(232,226,216,.5);
+  background:transparent;
+}
+.bnav-tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:5px;background:none;border:none;
+  color:#C0B8AE;cursor:pointer;position:relative;
+  transition:color .2s;
+  margin:8px 6px;border-radius:14px;
+}
+.bnav-tab.active{color:var(--gc)}
+.bnav-tab.active::before{
+  content:'';position:absolute;inset:0;
+  background:currentColor;opacity:.12;
+  border-radius:14px;
+}
+.bnav-emoji{font-size:26px;line-height:1}
+.bnav-text{font-size:13px;font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header" id="header">
+  <div class="hdr-default" id="hdrDefault">
+    <div style="width:40px"></div>
+    <h1>🍲 火鍋計時器</h1>
+    <button class="search-open-btn" onclick="openSearch()">🔍</button>
+  </div>
+  <div class="hdr-search" id="hdrSearch">
+    <input type="text" id="searchInput" placeholder="搜尋食材..." autocomplete="off">
+    <button class="search-cancel" onclick="closeSearch()">取消</button>
+  </div>
+</header>
+
+<!-- SUB-CATEGORY TABS -->
+<div class="sub-tabs" id="subTabs"></div>
+
+<!-- CONTENT -->
+<div class="sections" id="sections"></div>
+<div class="no-res" id="noRes"><span class="nr-e">🤔</span>找不到相關食材</div>
+
+<!-- FIXED BOTTOM -->
+<div class="bottom-area" id="bottomArea">
+  <div class="tp" id="timerPanel">
+    <div class="tp-handle"></div>
+    <div class="tp-head">
+      <div class="tp-head-left">⏱ 計時中 <span class="tp-count" id="tCount">0</span></div>
+      <button class="tp-clear" onclick="clearAllTimers()">全部清除</button>
+    </div>
+    <div class="tp-scroll" id="tScroll"></div>
+  </div>
+  <nav class="bnav" id="bnav"></nav>
+</div>
+
+<script>
+/* =============================================================
+   DATA
+============================================================= */
+const GROUPS = [
+  {id:'protein', emoji:'🥩', label:'蛋白質', color:'#E07B5E'},
+  {id:'greens',  emoji:'🥬', label:'蔬菜',   color:'#5B9A6F'},
+  {id:'carbs',   emoji:'🍜', label:'碳水',   color:'#C49A2A'},
+];
+
+const DATA = [
+  {id:'beef', emoji:'🥩', label:'牛肉', group:'protein', items:[
+    {name:'吊龍',alias:'上腦',time:10},
+    {name:'五花趾',alias:'腱子肉',time:20},
+    {name:'匙柄',alias:'肩胛肉',time:10},
+    {name:'匙仁',alias:'嫩肩',time:8},
+    {name:'胸口油',alias:'牛胸肉',time:40},
+    {name:'肥牛片',time:15},
+    {name:'牛舌',time:20},
+    {name:'牛百葉',time:15},
+    {name:'牛毛肚',time:15},
+  ]},
+  {id:'meat', emoji:'🍗', label:'其他肉類', group:'protein', items:[
+    {name:'豬肉片',time:30},
+    {name:'雞肉',time:300},
+  ]},
+  {id:'seafood', emoji:'🦐', label:'海鮮', group:'protein', items:[
+    {name:'蝦',time:120},
+    {name:'魚片',time:15},
+    {name:'蛤蜊',time:180},
+    {name:'鮮魷魚',time:30},
+    {name:'鮮鮑魚',time:60},
+    {name:'蟹棒',time:30},
+    {name:'蝦滑',time:120},
+  ]},
+  {id:'balls', emoji:'🧆', label:'雜丸', group:'protein', items:[
+    {name:'牛肉丸',time:180},
+    {name:'牛筋丸',time:180},
+    {name:'墨魚丸',time:180},
+    {name:'貢丸',time:180},
+    {name:'午餐肉',time:60},
+    {name:'鴨血',time:120},
+  ]},
+  {id:'vegetables', emoji:'🥬', label:'蔬菜', group:'greens', items:[
+    {name:'皇帝菜',alias:'茼蒿',time:15},
+    {name:'蓮藕片',time:60},
+    {name:'土豆片',time:60},
+    {name:'生菜',time:10},
+    {name:'冬瓜',time:120},
+    {name:'玉米',time:300},
+    {name:'西洋菜',time:15},
+    {name:'香芋',time:180},
+    {name:'西藍花',time:90},
+    {name:'娃娃菜',time:30},
+    {name:'油麥菜',time:15},
+    {name:'白蘿卜',time:180},
+  ]},
+  {id:'mushroom', emoji:'🍄', label:'菌菇', group:'greens', items:[
+    {name:'金針菇',time:30},
+    {name:'香菇',time:180},
+    {name:'杏鮑菇',time:120},
+    {name:'木耳',time:30},
+    {name:'平菇',time:30},
+    {name:'茶樹菇',time:180},
+  ]},
+  {id:'tofu', emoji:'🫘', label:'豆製品', group:'greens', items:[
+    {name:'腐竹',time:120},
+    {name:'豆皮',time:30},
+    {name:'油豆腐',time:120},
+  ]},
+  {id:'staple', emoji:'🍜', label:'主食', group:'carbs', items:[
+    {name:'粉絲',time:120},
+    {name:'烏冬麵',time:180},
+    {name:'年糕',time:120},
+    {name:'紅薯粉',time:60},
+    {name:'方便麵',time:180},
+    {name:'河粉',time:30},
+    {name:'蛋餃',time:120},
+  ]},
+];
+
+function groupOf(cat){ return GROUPS.find(g=>g.id===cat.group); }
+
+function fmtTime(sec){
+  if(sec>=60){const m=Math.floor(sec/60),s=sec%60;return m+':'+String(s).padStart(2,'0')}
+  return String(sec);
+}
+function fmtItemTime(sec){
+  if(sec>=3600){const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);return m>0?h+'小時'+m+'分':h+'小時'}
+  if(sec>=60){const m=Math.floor(sec/60),s=sec%60;return s>0?m+'分'+s+'秒':m+'分鐘'}
+  return sec+'秒';
+}
+
+/* =============================================================
+   STATE
+============================================================= */
+let selGroup = 'protein';
+let selSubCat = 'all';
+let isSearching = false;
+let searchQuery = '';
+let timers = [];
+let tIdSeq = 0;
+let scrollToEnd = false;
+
+/* =============================================================
+   AUDIO (iOS-compatible dual approach)
+============================================================= */
+// Generate WAV alarm sound
+function createAlarmWav(){
+  const sr=22050, dur=1.5, n=Math.floor(sr*dur);
+  const buf=new ArrayBuffer(44+n*2), v=new DataView(buf);
+  const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+  ws(0,'RIFF');v.setUint32(4,36+n*2,true);ws(8,'WAVE');
+  ws(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);
+  v.setUint16(22,1,true);v.setUint32(24,sr,true);
+  v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);
+  ws(36,'data');v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++){
+    const t=i/sr; let val=0;
+    for(let c=0;c<3;c++){
+      const o=c*0.45;
+      if(t>=o&&t<o+0.12) val+=Math.sin(2*Math.PI*880*(t-o))*Math.exp(-(t-o)*18)*0.7;
+      else if(t>=o+0.12&&t<o+0.24) val+=Math.sin(2*Math.PI*1100*(t-o-0.12))*Math.exp(-(t-o-0.12)*18)*0.7;
+      else if(t>=o+0.24&&t<o+0.42) val+=Math.sin(2*Math.PI*1320*(t-o-0.24))*Math.exp(-(t-o-0.24)*12)*0.6;
+    }
+    val=Math.max(-1,Math.min(1,val));
+    v.setInt16(44+i*2,val*32767,true);
+  }
+  return URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));
+}
+
+let alarmAudio=null, audioReady=false;
+let actx=null;
+
+function initAlarmAudio(){
+  if(actx&&actx.state==='suspended') actx.resume();
+  if(alarmAudio) return;
+  alarmAudio=new Audio(createAlarmWav());
+  alarmAudio.volume=0.01;
+  alarmAudio.play().then(()=>{
+    alarmAudio.pause();
+    alarmAudio.currentTime=0;
+    alarmAudio.volume=1.0;
+    audioReady=true;
+  }).catch(()=>{});
+  // Also init Web Audio API
+  if(!actx){
+    try{ actx=new(window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+  }
+  if(actx&&actx.state==='suspended') actx.resume();
+}
+
+// Unlock audio on EVERY user touch (iOS re-suspends)
+document.addEventListener('touchstart',initAlarmAudio);
+document.addEventListener('click',initAlarmAudio,{once:true});
+
+function playWebAudioAlarm(){
+  if(!actx) return;
+  try{
+    if(actx.state==='suspended') actx.resume();
+    const now=actx.currentTime;
+    function tone(f,s,d,vol){
+      const o=actx.createOscillator(),g=actx.createGain();
+      o.connect(g);g.connect(actx.destination);
+      o.type='sine';o.frequency.value=f;
+      g.gain.setValueAtTime(vol,s);
+      g.gain.exponentialRampToValueAtTime(0.001,s+d);
+      o.start(s);o.stop(s+d);
+    }
+    for(let i=0;i<3;i++){
+      const t=now+i*0.42;
+      tone(880,t,0.12,0.5);tone(1100,t+0.12,0.12,0.5);tone(1320,t+0.24,0.2,0.4);
+    }
+  }catch(e){}
+}
+
+function playAlarm(){
+  // Method 1: HTML5 Audio (most reliable on iOS)
+  if(alarmAudio&&audioReady){
+    try{alarmAudio.currentTime=0;alarmAudio.play().catch(()=>{});}catch(e){}
+  }
+  // Method 2: Web Audio API (backup)
+  playWebAudioAlarm();
+}
+
+function vibrate(){
+  if(navigator.vibrate) navigator.vibrate([250,80,250,80,250]);
+}
+
+/* =============================================================
+   TIMER LOGIC
+============================================================= */
+const CIRC=2*Math.PI*22;
+
+function addTimer(catId,itemName){
+  const cat=DATA.find(c=>c.id===catId);
+  const item=cat.items.find(i=>i.name===itemName);
+  if(!item)return;
+  timers.push({
+    id:++tIdSeq, name:item.name,
+    totalMs:item.time*1000,
+    endTime:Date.now()+item.time*1000,
+    pausedRem:null, paused:false, done:false,
+  });
+  scrollToEnd=true;
+  renderTimerPanel();
+  renderIngredients();
+}
+
+function remMs(t){
+  if(t.done)return 0;
+  if(t.paused)return t.pausedRem;
+  return Math.max(0,t.endTime-Date.now());
+}
+function remSec(t){return Math.ceil(remMs(t)/1000)}
+function progress(t){return remMs(t)/t.totalMs}
+
+function togglePause(id){
+  const t=timers.find(x=>x.id===id);if(!t||t.done)return;
+  if(t.paused){t.endTime=Date.now()+t.pausedRem;t.pausedRem=null;t.paused=false}
+  else{t.pausedRem=Math.max(0,t.endTime-Date.now());t.paused=true}
+  renderTimerPanel();
+}
+function resetTimer(id){
+  const t=timers.find(x=>x.id===id);if(!t)return;
+  t.endTime=Date.now()+t.totalMs;t.pausedRem=null;t.paused=false;t.done=false;
+  renderTimerPanel();
+}
+function removeTimer(id){timers=timers.filter(x=>x.id!==id);renderTimerPanel();renderIngredients()}
+function clearAllTimers(){timers=[];renderTimerPanel();renderIngredients()}
+
+setInterval(()=>{
+  if(!timers.length)return;
+  let changed=false;
+  timers.forEach(t=>{
+    if(t.done||t.paused)return;
+    if(remMs(t)<=0&&!t.done){t.done=true;playAlarm();vibrate()}
+    changed=true;
+  });
+  if(changed)renderTimerPanel();
+},250);
+
+/* =============================================================
+   RENDER: TIMER PANEL
+============================================================= */
+function renderTimerPanel(){
+  const panel=document.getElementById('timerPanel');
+  const scroll=document.getElementById('tScroll');
+  const countEl=document.getElementById('tCount');
+  if(!timers.length){panel.classList.remove('show');return}
+  panel.classList.add('show');
+  countEl.textContent=timers.length;
+  const sorted=[...timers].sort((a,b)=>{
+    if(a.done&&!b.done)return-1;if(!a.done&&b.done)return 1;
+    return remMs(a)-remMs(b);
+  });
+  const prevScroll=scroll.scrollLeft;
+  scroll.innerHTML=sorted.map(t=>{
+    const sec=remSec(t),p=progress(t),off=CIRC*(1-p);
+    const cls=t.done?'done':t.paused?'paused':'';
+    const display=t.done?'!':fmtTime(sec);
+    const numStyle=!t.done&&display.length>2?' style="font-size:12px"':'';
+    let btns;
+    if(t.done){btns=`<button class="t-btn-ok" onclick="removeTimer(${t.id})">確認</button>`}
+    else{btns=`
+      <button class="t-btn t-btn-pp ${t.paused?'is-p':''}" onclick="togglePause(${t.id})">${t.paused?'▶':'⏸'}</button>
+      <button class="t-btn t-btn-rst" onclick="resetTimer(${t.id})">↻</button>
+      <button class="t-btn t-btn-rm" onclick="removeTimer(${t.id})">✕</button>`}
+    return `<div class="tc ${cls}">
+      <svg width="52" height="52" viewBox="0 0 52 52">
+        <circle class="bg-ring" cx="26" cy="26" r="22"/>
+        <circle class="fg-ring" cx="26" cy="26" r="22" stroke-dasharray="${CIRC}" stroke-dashoffset="${off}"/>
+        <text class="t-num" x="26" y="26"${numStyle}>${display}</text>
+      </svg>
+      <div class="t-name">${t.name}</div>
+      <div class="t-btns">${btns}</div>
+    </div>`;
+  }).join('');
+  if(scrollToEnd){scroll.scrollLeft=scroll.scrollWidth;scrollToEnd=false}else{scroll.scrollLeft=prevScroll}
+}
+
+/* =============================================================
+   RENDER: BOTTOM NAV
+============================================================= */
+function renderBottomNav(){
+  const el=document.getElementById('bnav');
+  el.innerHTML=GROUPS.map(g=>`
+    <button class="bnav-tab ${selGroup===g.id?'active':''}"
+      onclick="selectGroup('${g.id}')" style="--gc:${g.color}">
+      <span class="bnav-emoji">${g.emoji}</span>
+      <span class="bnav-text">${g.label}</span>
+    </button>
+  `).join('');
+}
+
+function selectGroup(gid){
+  selGroup=gid;
+  const cats=DATA.filter(c=>c.group===gid);
+  selSubCat=cats.length===1?cats[0].id:'all';
+  renderBottomNav();renderSubCatTabs();renderIngredients();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* =============================================================
+   RENDER: SUB-CATEGORY TABS
+============================================================= */
+function renderSubCatTabs(){
+  const el=document.getElementById('subTabs');
+  // Hide during active search
+  if(isSearching&&searchQuery.trim()){el.classList.add('hide');return}
+  const cats=DATA.filter(c=>c.group===selGroup);
+  if(cats.length<=1){el.classList.add('hide');return}
+  el.classList.remove('hide');
+  const grp=GROUPS.find(g=>g.id===selGroup);
+  let h=`<button class="sub-tab ${selSubCat==='all'?'active':''}" onclick="selectSubCat('all')" style="--gc:${grp.color}">全部</button>`;
+  cats.forEach(c=>{
+    h+=`<button class="sub-tab ${selSubCat===c.id?'active':''}" onclick="selectSubCat('${c.id}')" style="--gc:${grp.color}">${c.emoji} ${c.label}</button>`;
+  });
+  el.innerHTML=h;
+}
+
+function selectSubCat(id){
+  selSubCat=id;
+  renderSubCatTabs();renderIngredients();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* =============================================================
+   RENDER: INGREDIENTS
+============================================================= */
+function getTimerNames(){const s=new Set();timers.forEach(t=>s.add(t.name));return s}
+
+function renderIngredients(){
+  const container=document.getElementById('sections');
+  const noRes=document.getElementById('noRes');
+  const timerNames=getTimerNames();
+  const q=searchQuery.trim().toLowerCase();
+  const searching=isSearching&&q.length>0;
+  let hasResults=false,html='',lastGrpId='';
+
+  const catsToShow=searching?DATA:DATA.filter(c=>{
+    if(c.group!==selGroup)return false;
+    if(selSubCat!=='all'&&c.id!==selSubCat)return false;
+    return true;
+  });
+
+  catsToShow.forEach(cat=>{
+    let items=cat.items;
+    if(searching){
+      items=items.filter(it=>it.name.toLowerCase().includes(q)||(it.alias&&it.alias.toLowerCase().includes(q)));
+    }
+    if(!items.length)return;
+    hasResults=true;
+
+    // Group header (search mode only)
+    if(searching&&cat.group!==lastGrpId){
+      const grp=groupOf(cat);
+      html+=`<div class="grp-header" style="--gc:${grp.color}">
+        <span class="grp-dot"></span>${grp.label}<span class="grp-line"></span></div>`;
+      lastGrpId=cat.group;
+    }
+
+    // Section title (when showing multiple sub-cats)
+    const showTitle=searching||(selSubCat==='all'&&DATA.filter(c=>c.group===selGroup).length>1);
+    if(showTitle){
+      const grp=groupOf(cat);
+      html+=`<div class="sec-title" style="--gc:${grp.color}"><span>${cat.emoji}</span>${cat.label}</div>`;
+    }
+
+    html+=`<div class="grid" style="--gc:${groupOf(cat).color}">`;
+    items.forEach(it=>{
+      const active=timerNames.has(it.name);
+      html+=`<div class="i-card ${active?'has-timer':''}" onclick="addTimer('${cat.id}','${it.name}')">
+        <div class="i-name">${it.name}</div>
+        ${it.alias?`<div class="i-alias">${it.alias}</div>`:''}
+        <div class="i-time">${fmtItemTime(it.time)}</div>
+        <div class="i-go">${active?'再加一個':'開始'}</div>
+      </div>`;
+    });
+    html+='</div>';
+  });
+
+  container.innerHTML=html;
+  noRes.classList.toggle('show',!hasResults);
+}
+
+/* =============================================================
+   SEARCH
+============================================================= */
+const searchInput=document.getElementById('searchInput');
+
+function openSearch(){
+  isSearching=true;
+  document.getElementById('hdrDefault').style.display='none';
+  document.getElementById('hdrSearch').style.display='flex';
+  searchInput.value='';searchQuery='';
+  searchInput.focus();
+  renderSubCatTabs();
+}
+function closeSearch(){
+  isSearching=false;searchQuery='';
+  document.getElementById('hdrSearch').style.display='none';
+  document.getElementById('hdrDefault').style.display='flex';
+  searchInput.blur();
+  renderSubCatTabs();renderIngredients();
+}
+searchInput.addEventListener('input',()=>{
+  searchQuery=searchInput.value;
+  renderSubCatTabs();renderIngredients();
+});
+
+/* =============================================================
+   INIT
+============================================================= */
+renderBottomNav();
+renderSubCatTabs();
+renderIngredients();
+</script>
+</body>
+</html>
