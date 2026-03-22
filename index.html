@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="火鍋計時器">
+<meta name="theme-color" content="#1a1a2e">
+<link rel="icon" type="image/png" href="https://pfst.cf2.poecdn.net/base/image/fc49ee2aa1adb47d4abcbdac409511ca80ed22d964f62561c98a694efbb2e386?w=1024&h=1024">
+<link rel="apple-touch-icon" href="https://pfst.cf2.poecdn.net/base/image/fc49ee2aa1adb47d4abcbdac409511ca80ed22d964f62561c98a694efbb2e386?w=1024&h=1024">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --navy:#1a1a2e;
+  --red:#dc2626;--red-l:#fef2f2;
+  --green:#059669;--green-l:#ecfdf5;
+  --amber:#d97706;--amber-l:#fffbeb;
+  --bg:#fff;--txt:#111;--txt-l:#999;
+  --border:#f0f0f0;
+  --r:16px;--r-s:12px;
+}
+html,body{margin:0;padding:0}
+html{height:100%;background:#f5f5f7}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang TC","Noto Sans TC",sans-serif;
+  background:#f5f5f7;color:var(--txt);
+  min-height:100%;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+/* 狀態列安全區域背景 — 深色底讓白字可讀 */
+body::before{
+  content:'';position:fixed;top:0;left:0;right:0;
+  height:env(safe-area-inset-top,0px);
+  background:var(--navy);z-index:9999;
+  pointer-events:none;
+}
+.app{
+  max-width:420px;margin:0 auto;
+  background:var(--bg);
+  min-height:100vh;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:80px;
+  position:relative;
+  box-shadow:0 0 60px rgba(0,0,0,.08);
+}
+
+/* ========================================
+   HEADER — 格柵構成 Mondrian Hero
+   ======================================== */
+.header{
+  position:relative;z-index:100;
+  background:var(--bg);
+}
+.hero-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:64px 64px;
+  gap:3px;padding:3px;
+  background:#fff;
+}
+.hero-grid .block{position:relative;overflow:hidden}
+.hero-grid .b1{
+  grid-row:1/3;background:var(--navy);
+  border-radius:var(--r-s) 0 0 var(--r-s);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:4px;
+}
+.hero-grid .b1 .title{
+  font-family:'Noto Serif TC',serif;
+  font-size:22px;font-weight:900;color:#fff;
+  letter-spacing:2px;writing-mode:vertical-rl;
+}
+.hero-grid .b2{
+  background:var(--gc,var(--red));
+  border-radius:0 var(--r-s) 0 0;
+  display:flex;align-items:center;justify-content:center;
+}
+.hero-grid .b2 .emoji{font-size:28px}
+.hero-grid .b3{
+  background:var(--gc2,var(--amber));
+  border-radius:0 0 var(--r-s) 0;
+  display:flex;align-items:center;padding-left:14px;
+}
+.hero-grid .b3 .sub{
+  font-size:10px;color:rgba(255,255,255,.85);
+  letter-spacing:1.5px;font-weight:600;
+  line-height:1.5;
+}
+
+/* Search bar */
+.search-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 14px 6px;
+}
+.search-bar .s-input{
+  flex:1;padding:10px 16px;border-radius:12px;
+  border:1.5px solid var(--border);
+  font-size:14px;color:var(--txt);outline:none;
+  background:#fafafa;
+  transition:border-color .2s;
+}
+.search-bar .s-input:focus{border-color:var(--gc,var(--red))}
+.search-bar .s-input::placeholder{color:#ccc}
+.search-bar .s-cancel{
+  display:none;background:none;border:none;
+  font-size:13px;font-weight:700;color:var(--gc,var(--red));
+  cursor:pointer;padding:6px;white-space:nowrap;
+}
+.search-bar.active .s-cancel{display:block}
+
+/* ========================================
+   SUB-CATEGORY TABS
+   ======================================== */
+.sub-tabs{
+  position:sticky;
+  top:env(safe-area-inset-top,0px);
+  z-index:98;
+  background:rgba(255,255,255,.85);
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+  display:flex;overflow-x:auto;gap:6px;
+  padding:8px 14px;
+  scrollbar-width:none;
+}
+.sub-tabs::-webkit-scrollbar{display:none}
+.sub-tabs.hide{display:none}
+.sub-tab{
+  flex-shrink:0;padding:7px 16px;border-radius:10px;
+  border:2px solid var(--gc,var(--red));
+  background:transparent;color:var(--gc,var(--red));
+  font-size:13px;font-weight:700;cursor:pointer;
+  transition:all .2s;white-space:nowrap;
+}
+.sub-tab.active{background:var(--gc,var(--red));color:#fff}
+
+/* ========================================
+   CONTENT AREA
+   ======================================== */
+.sections{padding:0 12px 200px}
+
+/* Group header (search mode) */
+.grp-header{
+  display:flex;align-items:center;gap:8px;
+  padding:18px 4px 6px;font-size:12px;font-weight:800;
+  color:var(--gc);letter-spacing:2px;
+}
+.grp-dot{width:10px;height:10px;border-radius:3px;background:var(--gc);flex-shrink:0}
+.grp-line{flex:1;height:2px;background:var(--gc);opacity:.15}
+
+/* Section title — geometric block style */
+.sec-title{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 0 10px;margin-bottom:8px;
+  position:relative;
+}
+.sec-title::after{
+  content:'';flex:1;height:3px;border-radius:2px;
+  background:linear-gradient(90deg,var(--gc),transparent);
+  opacity:.2;
+}
+.sec-title .st-block{
+  width:6px;height:28px;border-radius:3px;
+  background:var(--gc);flex-shrink:0;
+}
+.sec-title span{font-size:20px}
+.sec-title .st-label{
+  font-size:16px;font-weight:800;color:var(--txt);
+  letter-spacing:1px;
+}
+
+/* Ingredient grid */
+.grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:8px;margin-bottom:16px;
+}
+@media(min-width:420px){.grid{grid-template-columns:repeat(4,1fr)}}
+
+.i-card{
+  background:#fff;
+  border-radius:var(--r-s);
+  padding:14px 6px 10px;text-align:center;
+  border:1.5px solid var(--border);
+  box-shadow:0 2px 8px rgba(0,0,0,.02);
+  cursor:pointer;user-select:none;
+  transition:all .15s cubic-bezier(.22,1,.36,1);
+  position:relative;overflow:hidden;
+}
+.i-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;
+  height:3px;background:var(--gc);opacity:0;
+  transition:opacity .2s;
+}
+.i-card:hover::before,.i-card:active::before{opacity:1}
+.i-card:active{transform:scale(.94)}
+.i-card.has-timer{
+  border-color:var(--gc);
+  background:var(--gc-l,#fef2f2);
+}
+.i-card.has-timer::before{opacity:1}
+.i-card .i-name{font-size:14px;font-weight:700;line-height:1.3;color:var(--txt)}
+.i-card .i-alias{font-size:10px;color:var(--txt-l);margin-top:1px}
+.i-card .i-time{font-size:12px;color:var(--gc);font-weight:700;margin-top:4px}
+.i-card .i-go{
+  display:inline-block;margin-top:6px;padding:3px 12px;
+  background:var(--gc);color:#fff;border-radius:8px;
+  font-size:11px;font-weight:700;
+  transition:background .2s;
+}
+
+/* No results */
+.no-res{text-align:center;padding:60px 20px;color:var(--txt-l);font-size:16px;display:none}
+.no-res.show{display:block}
+.no-res .nr-e{font-size:48px;display:block;margin-bottom:12px}
+
+/* ========================================
+   BOTTOM AREA
+   ======================================== */
+.bottom-area{
+  position:fixed;bottom:0;
+  left:50%;transform:translateX(-50%);
+  max-width:420px;width:100%;z-index:200;
+  border-radius:18px 18px 0 0;
+  background:#fff;
+  box-shadow:0 -6px 30px rgba(0,0,0,.1);
+  padding-bottom:env(safe-area-inset-bottom,0);
+  overflow:hidden;
+}
+
+/* Timer panel */
+.tp{
+  max-height:0;overflow:hidden;
+  transition:max-height .3s ease;
+  background:var(--navy);
+  border-top:0 solid var(--gc,var(--red));
+}
+.tp.show{max-height:260px;border-top-width:3px}
+.tp-handle{width:40px;height:3px;background:rgba(255,255,255,.15);border-radius:2px;margin:10px auto 6px}
+.tp-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px 8px;
+}
+.tp-head-left{font-size:13px;font-weight:700;color:rgba(255,255,255,.6);display:flex;align-items:center;gap:6px}
+.tp-count{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:20px;height:20px;background:var(--gc,var(--red));color:#fff;
+  border-radius:6px;font-size:11px;font-weight:800;padding:0 5px;
+}
+.tp-clear{background:none;border:none;color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;padding:4px 6px}
+.tp-clear:active{color:rgba(255,255,255,.6)}
+.tp-scroll{
+  display:flex;gap:10px;overflow-x:auto;padding:0 14px 12px;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;
+}
+.tp-scroll::-webkit-scrollbar{display:none}
+
+.tc{
+  flex-shrink:0;width:100px;
+  background:rgba(255,255,255,.06);border-radius:var(--r);
+  padding:10px 4px 8px;text-align:center;
+  border:1.5px solid rgba(255,255,255,.08);
+  transition:border-color .3s,background .3s;
+}
+.tc.done{border-color:var(--amber);animation:alertPulse .7s ease-in-out infinite alternate}
+.tc.paused{border-color:rgba(255,255,255,.15);opacity:.7}
+@keyframes alertPulse{from{background:rgba(217,119,6,.1)}to{background:rgba(217,119,6,.2)}}
+.tc svg{display:block;margin:0 auto}
+.tc .bg-ring{fill:none;stroke:rgba(255,255,255,.08);stroke-width:4}
+.tc .fg-ring{
+  fill:none;stroke:var(--tc,var(--red));stroke-width:4;stroke-linecap:round;
+  transform:rotate(-90deg);transform-origin:center;
+  transition:stroke-dashoffset .3s linear;
+}
+.tc.done .fg-ring{stroke:var(--amber)}
+.tc.paused .fg-ring{stroke:rgba(255,255,255,.3)}
+.tc .t-num{fill:#fff;font-size:15px;font-weight:800;text-anchor:middle;dominant-baseline:central;font-family:'Noto Serif TC',serif}
+.tc.done .t-num{fill:var(--amber);font-size:18px}
+.tc .t-name{font-size:11px;font-weight:600;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(255,255,255,.6)}
+.tc .t-btns{display:flex;justify-content:center;gap:5px;margin-top:5px}
+.t-btn{
+  width:26px;height:26px;border-radius:8px;border:none;
+  font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.t-btn-pp{background:var(--tc,var(--red));color:#fff}
+.t-btn-pp.is-p{background:var(--amber);color:#fff}
+.t-btn-rst{background:rgba(255,255,255,.1);color:rgba(255,255,255,.5)}
+.t-btn-rm{background:rgba(255,255,255,.06);color:rgba(255,255,255,.3);font-size:13px}
+.t-btn-ok{
+  background:var(--amber);color:#fff;border:none;border-radius:8px;
+  padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer;
+}
+
+/* Bottom navigation — geometric style */
+.bnav{
+  display:flex;height:72px;gap:3px;padding:3px;
+  background:#fff;
+}
+.bnav-tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;background:#fafafa;border:none;
+  color:#ccc;cursor:pointer;position:relative;
+  transition:all .2s;border-radius:var(--r-s);
+  overflow:hidden;
+}
+.bnav-tab.active{color:#fff}
+.bnav-tab.active::before{
+  content:'';position:absolute;inset:0;
+  background:var(--gc);border-radius:var(--r-s);
+}
+.bnav-emoji{font-size:24px;line-height:1;position:relative;z-index:1}
+.bnav-text{font-size:12px;font-weight:700;position:relative;z-index:1}
+
+/* ========================================
+   COMPOSITION BAR — 色彩構成條
+   ======================================== */
+.comp-bar{
+  display:flex;height:4px;gap:2px;padding:0 14px;margin-bottom:4px;
+}
+.comp-bar span{flex:1;border-radius:2px}
+.comp-bar .cb1{background:var(--red)}
+.comp-bar .cb2{background:var(--green)}
+.comp-bar .cb3{background:var(--amber)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER — Mondrian Grid -->
+<header class="header" id="header">
+  <div class="hero-grid" id="heroGrid">
+    <div class="block b1">
+      <div class="title">火鍋計時器</div>
+    </div>
+    <div class="block b2" id="heroB2">
+      <span class="emoji" id="heroEmoji">🥩</span>
+    </div>
+    <div class="block b3" id="heroB3">
+      <div class="sub" id="heroSub">涮 煮 時 間<br>一 目 了 然</div>
+    </div>
+  </div>
+  <div class="comp-bar"><span class="cb1"></span><span class="cb2"></span><span class="cb3"></span></div>
+  <div class="search-bar" id="searchBar">
+    <input type="text" class="s-input" id="searchInput" placeholder="🔍 搜尋食材..." autocomplete="off">
+    <button class="s-cancel" onclick="closeSearch()">取消</button>
+  </div>
+</header>
+
+<!-- SUB-CATEGORY TABS -->
+<div class="sub-tabs" id="subTabs"></div>
+
+<!-- CONTENT -->
+<div class="sections" id="sections"></div>
+<div class="no-res" id="noRes"><span class="nr-e">🤔</span>找不到相關食材</div>
+
+</div><!-- /.app -->
+
+<!-- FIXED BOTTOM (outside .app, uses viewport centering) -->
+<div class="bottom-area" id="bottomArea">
+  <div class="tp" id="timerPanel">
+    <div class="tp-handle"></div>
+    <div class="tp-head">
+      <div class="tp-head-left">⏱ 計時中 <span class="tp-count" id="tCount">0</span></div>
+      <button class="tp-clear" onclick="clearAllTimers()">全部清除</button>
+    </div>
+    <div class="tp-scroll" id="tScroll"></div>
+  </div>
+  <nav class="bnav" id="bnav"></nav>
+</div>
+
+<script>
+/* =============================================================
+   DATA
+============================================================= */
+const GROUPS = [
+  {id:'protein', emoji:'🥩', label:'蛋白質', color:'#dc2626', colorL:'#fef2f2'},
+  {id:'greens',  emoji:'🥬', label:'蔬菜',   color:'#059669', colorL:'#ecfdf5'},
+  {id:'carbs',   emoji:'🍜', label:'碳水',   color:'#d97706', colorL:'#fffbeb'},
+];
+
+const DATA = [
+  {id:'beef', emoji:'🥩', label:'牛肉', group:'protein', items:[
+    {name:'吊龍',alias:'上腦',time:10},
+    {name:'五花趾',alias:'腱子肉',time:20},
+    {name:'匙柄',alias:'肩胛肉',time:10},
+    {name:'匙仁',alias:'嫩肩',time:8},
+    {name:'胸口油',alias:'牛胸肉',time:40},
+    {name:'肥牛片',time:15},
+    {name:'牛舌',time:20},
+    {name:'牛百葉',time:15},
+    {name:'牛毛肚',time:15},
+  ]},
+  {id:'meat', emoji:'🍗', label:'其他肉類', group:'protein', items:[
+    {name:'豬肉片',time:30},
+    {name:'雞肉',time:300},
+  ]},
+  {id:'seafood', emoji:'🦐', label:'海鮮', group:'protein', items:[
+    {name:'蝦',time:120},
+    {name:'魚片',time:15},
+    {name:'蛤蜊',time:180},
+    {name:'鮮魷魚',time:30},
+    {name:'鮮鮑魚',time:60},
+    {name:'蟹棒',time:30},
+    {name:'蝦滑',time:120},
+  ]},
+  {id:'balls', emoji:'🧆', label:'雜丸', group:'protein', items:[
+    {name:'牛肉丸',time:180},
+    {name:'牛筋丸',time:180},
+    {name:'墨魚丸',time:180},
+    {name:'貢丸',time:180},
+    {name:'午餐肉',time:60},
+    {name:'鴨血',time:120},
+  ]},
+  {id:'vegetables', emoji:'🥬', label:'蔬菜', group:'greens', items:[
+    {name:'皇帝菜',alias:'茼蒿',time:15},
+    {name:'蓮藕片',time:60},
+    {name:'土豆片',time:60},
+    {name:'生菜',time:10},
+    {name:'冬瓜',time:120},
+    {name:'玉米',time:300},
+    {name:'西洋菜',time:15},
+    {name:'香芋',time:180},
+    {name:'西藍花',time:90},
+    {name:'娃娃菜',time:30},
+    {name:'油麥菜',time:15},
+    {name:'白蘿卜',time:180},
+  ]},
+  {id:'mushroom', emoji:'🍄', label:'菌菇', group:'greens', items:[
+    {name:'金針菇',time:30},
+    {name:'香菇',time:180},
+    {name:'杏鮑菇',time:120},
+    {name:'木耳',time:30},
+    {name:'平菇',time:30},
+    {name:'茶樹菇',time:180},
+  ]},
+  {id:'tofu', emoji:'🫘', label:'豆製品', group:'greens', items:[
+    {name:'腐竹',time:120},
+    {name:'豆皮',time:30},
+    {name:'油豆腐',time:120},
+  ]},
+  {id:'staple', emoji:'🍜', label:'主食', group:'carbs', items:[
+    {name:'粉絲',time:120},
+    {name:'烏冬麵',time:180},
+    {name:'年糕',time:120},
+    {name:'紅薯粉',time:60},
+    {name:'方便麵',time:180},
+    {name:'河粉',time:30},
+    {name:'蛋餃',time:120},
+  ]},
+];
+
+function groupOf(cat){ return GROUPS.find(g=>g.id===cat.group); }
+
+function fmtTime(sec){
+  if(sec>=60){const m=Math.floor(sec/60),s=sec%60;return m+':'+String(s).padStart(2,'0')}
+  return String(sec);
+}
+function fmtItemTime(sec){
+  if(sec>=3600){const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);return m>0?h+'小時'+m+'分':h+'小時'}
+  if(sec>=60){const m=Math.floor(sec/60),s=sec%60;return s>0?m+'分'+s+'秒':m+'分鐘'}
+  return sec+'秒';
+}
+
+/* =============================================================
+   STATE
+============================================================= */
+let selGroup = 'protein';
+let selSubCat = 'all';
+let isSearching = false;
+let searchQuery = '';
+let timers = [];
+let tIdSeq = 0;
+let scrollToEnd = false;
+
+/* =============================================================
+   AUDIO (iOS-compatible)
+============================================================= */
+function createAlarmWav(){
+  const sr=22050,dur=1.5,n=Math.floor(sr*dur);
+  const buf=new ArrayBuffer(44+n*2),v=new DataView(buf);
+  const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+  ws(0,'RIFF');v.setUint32(4,36+n*2,true);ws(8,'WAVE');
+  ws(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);
+  v.setUint16(22,1,true);v.setUint32(24,sr,true);
+  v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);
+  ws(36,'data');v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++){
+    const t=i/sr;let val=0;
+    for(let c=0;c<3;c++){
+      const o=c*0.45;
+      if(t>=o&&t<o+0.12)val+=Math.sin(2*Math.PI*880*(t-o))*Math.exp(-(t-o)*18)*0.7;
+      else if(t>=o+0.12&&t<o+0.24)val+=Math.sin(2*Math.PI*1100*(t-o-0.12))*Math.exp(-(t-o-0.12)*18)*0.7;
+      else if(t>=o+0.24&&t<o+0.42)val+=Math.sin(2*Math.PI*1320*(t-o-0.24))*Math.exp(-(t-o-0.24)*12)*0.6;
+    }
+    val=Math.max(-1,Math.min(1,val));
+    v.setInt16(44+i*2,val*32767,true);
+  }
+  return URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));
+}
+
+let alarmAudio=null,audioReady=false,actx=null;
+
+function initAlarmAudio(){
+  if(actx&&actx.state==='suspended')actx.resume();
+  if(alarmAudio)return;
+  alarmAudio=new Audio(createAlarmWav());
+  alarmAudio.volume=0.01;
+  alarmAudio.play().then(()=>{
+    alarmAudio.pause();alarmAudio.currentTime=0;
+    alarmAudio.volume=1.0;audioReady=true;
+  }).catch(()=>{});
+  if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}
+  if(actx&&actx.state==='suspended')actx.resume();
+}
+document.addEventListener('touchstart',initAlarmAudio);
+document.addEventListener('click',initAlarmAudio,{once:true});
+
+function playWebAudioAlarm(){
+  if(!actx)return;
+  try{
+    if(actx.state==='suspended')actx.resume();
+    const now=actx.currentTime;
+    function tone(f,s,d,vol){
+      const o=actx.createOscillator(),g=actx.createGain();
+      o.connect(g);g.connect(actx.destination);
+      o.type='sine';o.frequency.value=f;
+      g.gain.setValueAtTime(vol,s);
+      g.gain.exponentialRampToValueAtTime(0.001,s+d);
+      o.start(s);o.stop(s+d);
+    }
+    for(let i=0;i<3;i++){
+      const t=now+i*0.42;
+      tone(880,t,0.12,0.5);tone(1100,t+0.12,0.12,0.5);tone(1320,t+0.24,0.2,0.4);
+    }
+  }catch(e){}
+}
+function playAlarm(){
+  if(alarmAudio&&audioReady){try{alarmAudio.currentTime=0;alarmAudio.play().catch(()=>{})}catch(e){}}
+  playWebAudioAlarm();
+}
+function vibrate(){if(navigator.vibrate)navigator.vibrate([250,80,250,80,250])}
+
+/* =============================================================
+   TIMER LOGIC
+============================================================= */
+const CIRC=2*Math.PI*22;
+
+function addTimer(catId,itemName){
+  const cat=DATA.find(c=>c.id===catId);
+  const item=cat.items.find(i=>i.name===itemName);
+  if(!item)return;
+  const grp=groupOf(cat);
+  timers.push({
+    id:++tIdSeq,name:item.name,color:grp.color,
+    totalMs:item.time*1000,
+    endTime:Date.now()+item.time*1000,
+    pausedRem:null,paused:false,done:false,
+  });
+  scrollToEnd=true;
+  renderTimerPanel();renderIngredients();
+}
+
+function remMs(t){if(t.done)return 0;if(t.paused)return t.pausedRem;return Math.max(0,t.endTime-Date.now())}
+function remSec(t){return Math.ceil(remMs(t)/1000)}
+function progress(t){return remMs(t)/t.totalMs}
+
+function togglePause(id){
+  const t=timers.find(x=>x.id===id);if(!t||t.done)return;
+  if(t.paused){t.endTime=Date.now()+t.pausedRem;t.pausedRem=null;t.paused=false}
+  else{t.pausedRem=Math.max(0,t.endTime-Date.now());t.paused=true}
+  renderTimerPanel();
+}
+function resetTimer(id){
+  const t=timers.find(x=>x.id===id);if(!t)return;
+  t.endTime=Date.now()+t.totalMs;t.pausedRem=null;t.paused=false;t.done=false;
+  renderTimerPanel();
+}
+function removeTimer(id){timers=timers.filter(x=>x.id!==id);renderTimerPanel();renderIngredients()}
+function clearAllTimers(){timers=[];renderTimerPanel();renderIngredients()}
+
+setInterval(()=>{
+  if(!timers.length)return;
+  let changed=false;
+  timers.forEach(t=>{
+    if(t.done||t.paused)return;
+    if(remMs(t)<=0&&!t.done){t.done=true;playAlarm();vibrate()}
+    changed=true;
+  });
+  if(changed)renderTimerPanel();
+},250);
+
+/* =============================================================
+   RENDER: TIMER PANEL
+============================================================= */
+function renderTimerPanel(){
+  const panel=document.getElementById('timerPanel');
+  const scroll=document.getElementById('tScroll');
+  const countEl=document.getElementById('tCount');
+  if(!timers.length){panel.classList.remove('show');return}
+  panel.classList.add('show');
+  countEl.textContent=timers.length;
+  const sorted=[...timers].sort((a,b)=>{
+    if(a.done&&!b.done)return-1;if(!a.done&&b.done)return 1;
+    return remMs(a)-remMs(b);
+  });
+  const prevScroll=scroll.scrollLeft;
+  scroll.innerHTML=sorted.map(t=>{
+    const sec=remSec(t),p=progress(t),off=CIRC*(1-p);
+    const cls=t.done?'done':t.paused?'paused':'';
+    const display=t.done?'!':fmtTime(sec);
+    const numStyle=!t.done&&display.length>2?' style="font-size:12px"':'';
+    let btns;
+    if(t.done){btns=`<button class="t-btn-ok" onclick="removeTimer(${t.id})">確認</button>`}
+    else{btns=`
+      <button class="t-btn t-btn-pp ${t.paused?'is-p':''}" onclick="togglePause(${t.id})">${t.paused?'▶':'⏸'}</button>
+      <button class="t-btn t-btn-rst" onclick="resetTimer(${t.id})">↻</button>
+      <button class="t-btn t-btn-rm" onclick="removeTimer(${t.id})">✕</button>`}
+    return `<div class="tc ${cls}" style="--tc:${t.color}">
+      <svg width="52" height="52" viewBox="0 0 52 52">
+        <circle class="bg-ring" cx="26" cy="26" r="22"/>
+        <circle class="fg-ring" cx="26" cy="26" r="22" stroke-dasharray="${CIRC}" stroke-dashoffset="${off}"/>
+        <text class="t-num" x="26" y="26"${numStyle}>${display}</text>
+      </svg>
+      <div class="t-name">${t.name}</div>
+      <div class="t-btns">${btns}</div>
+    </div>`;
+  }).join('');
+  if(scrollToEnd){scroll.scrollLeft=scroll.scrollWidth;scrollToEnd=false}else{scroll.scrollLeft=prevScroll}
+}
+
+/* =============================================================
+   RENDER: HERO UPDATE
+============================================================= */
+function updateHero(){
+  const grp=GROUPS.find(g=>g.id===selGroup);
+  const grp2=GROUPS[(GROUPS.indexOf(grp)+1)%GROUPS.length];
+  document.getElementById('heroB2').style.background=grp.color;
+  document.getElementById('heroB3').style.background=grp2.color;
+  document.getElementById('heroEmoji').textContent=grp.emoji;
+  // Update CSS variable for active group
+  document.documentElement.style.setProperty('--gc',grp.color);
+  document.documentElement.style.setProperty('--gc-l',grp.colorL);
+}
+
+/* =============================================================
+   RENDER: BOTTOM NAV
+============================================================= */
+function renderBottomNav(){
+  const el=document.getElementById('bnav');
+  el.innerHTML=GROUPS.map(g=>`
+    <button class="bnav-tab ${selGroup===g.id?'active':''}"
+      onclick="selectGroup('${g.id}')" style="--gc:${g.color}">
+      <span class="bnav-emoji">${g.emoji}</span>
+      <span class="bnav-text">${g.label}</span>
+    </button>
+  `).join('');
+}
+
+function selectGroup(gid){
+  selGroup=gid;selSubCat='all';
+  updateHero();renderBottomNav();renderSubCatTabs();renderIngredients();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* =============================================================
+   RENDER: SUB-CATEGORY TABS
+============================================================= */
+function renderSubCatTabs(){
+  const el=document.getElementById('subTabs');
+  if(isSearching&&searchQuery.trim()){el.classList.add('hide');return}
+  const cats=DATA.filter(c=>c.group===selGroup);
+  const grp=GROUPS.find(g=>g.id===selGroup);
+  el.classList.remove('hide');
+  let h=`<button class="sub-tab ${selSubCat==='all'?'active':''}" onclick="selectSubCat('all')" style="--gc:${grp.color}">全部</button>`;
+  cats.forEach(c=>{
+    h+=`<button class="sub-tab ${selSubCat===c.id?'active':''}" onclick="selectSubCat('${c.id}')" style="--gc:${grp.color}">${c.emoji} ${c.label}</button>`;
+  });
+  el.innerHTML=h;
+}
+
+function selectSubCat(id){
+  selSubCat=id;
+  renderSubCatTabs();renderIngredients();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* =============================================================
+   RENDER: INGREDIENTS
+============================================================= */
+function getTimerNames(){const s=new Set();timers.forEach(t=>s.add(t.name));return s}
+
+function renderIngredients(){
+  const container=document.getElementById('sections');
+  const noRes=document.getElementById('noRes');
+  const timerNames=getTimerNames();
+  const q=searchQuery.trim().toLowerCase();
+  const searching=isSearching&&q.length>0;
+  let hasResults=false,html='',lastGrpId='';
+
+  const catsToShow=searching?DATA:DATA.filter(c=>{
+    if(c.group!==selGroup)return false;
+    if(selSubCat!=='all'&&c.id!==selSubCat)return false;
+    return true;
+  });
+
+  catsToShow.forEach(cat=>{
+    let items=cat.items;
+    if(searching){
+      items=items.filter(it=>it.name.toLowerCase().includes(q)||(it.alias&&it.alias.toLowerCase().includes(q)));
+    }
+    if(!items.length)return;
+    hasResults=true;
+    const grp=groupOf(cat);
+
+    if(searching&&cat.group!==lastGrpId){
+      html+=`<div class="grp-header" style="--gc:${grp.color}">
+        <span class="grp-dot"></span>${grp.label}<span class="grp-line"></span></div>`;
+      lastGrpId=cat.group;
+    }
+
+    const showTitle=searching||selSubCat==='all';
+    if(showTitle){
+      html+=`<div class="sec-title" style="--gc:${grp.color}">
+        <div class="st-block"></div><span>${cat.emoji}</span>
+        <span class="st-label">${cat.label}</span>
+      </div>`;
+    }
+
+    html+=`<div class="grid" style="--gc:${grp.color};--gc-l:${grp.colorL}">`;
+    items.forEach(it=>{
+      const active=timerNames.has(it.name);
+      html+=`<div class="i-card ${active?'has-timer':''}" onclick="addTimer('${cat.id}','${it.name}')">
+        <div class="i-name">${it.name}</div>
+        ${it.alias?`<div class="i-alias">${it.alias}</div>`:''}
+        <div class="i-time">${fmtItemTime(it.time)}</div>
+        <div class="i-go">${active?'再加一個':'開始'}</div>
+      </div>`;
+    });
+    html+='</div>';
+  });
+
+  container.innerHTML=html;
+  noRes.classList.toggle('show',!hasResults);
+}
+
+/* =============================================================
+   SEARCH
+============================================================= */
+const searchInput=document.getElementById('searchInput');
+const searchBar=document.getElementById('searchBar');
+
+searchInput.addEventListener('focus',()=>{
+  isSearching=true;
+  searchBar.classList.add('active');
+  renderSubCatTabs();
+});
+
+function closeSearch(){
+  isSearching=false;searchQuery='';
+  searchInput.value='';searchInput.blur();
+  searchBar.classList.remove('active');
+  renderSubCatTabs();renderIngredients();
+}
+
+searchInput.addEventListener('input',()=>{
+  searchQuery=searchInput.value;
+  renderSubCatTabs();renderIngredients();
+});
+
+/* =============================================================
+   INIT
+============================================================= */
+updateHero();
+renderBottomNav();
+renderSubCatTabs();
+renderIngredients();
+</script>
+</body>
+</html>
